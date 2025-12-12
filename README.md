@@ -13,44 +13,74 @@
 
 ---
 
-### 🌟 *Why Choose QGroundControl?*
+# QGroundControl - Fork GRIn
 
-- *🚀 Ease of Use*: A beginner-friendly interface designed for smooth operation without sacrificing advanced features for pros.
-- *✈️ Comprehensive Flight Control*: Full flight control and mission management for *PX4* and *ArduPilot* powered UAVs.
-- *🛠️ Mission Planning*: Easily plan complex missions with a simple drag-and-drop interface.
-
-🔍 For a deeper dive into using QGC, check out the [User Manual](https://docs.qgroundcontrol.com/en/) – although thanks to QGC's intuitive UI, you may not even need it!
-
+Fork do [QGroundControl](https://github.com/mavlink/qgroundcontrol) para geração de APKs para o GRIn.
 
 ---
 
-### 🚁 *Key Features*
+## Requisitos
 
-- 🕹️ *Full Flight Control*: Supports all *MAVLink drones*.
-- ⚙️ *Vehicle Setup*: Tailored configuration for *PX4* and *ArduPilot* platforms.
-- 🔧 *Fully Open Source*: Customize and extend the software to suit your needs.
-
-🎯 Check out the latest updates in our [New Features and Release Notes](https://github.com/mavlink/qgroundcontrol/blob/master/ChangeLog.md).
-
----
-
-### 💻 *Get Involved!*
-
-QGroundControl is *open-source*, meaning you have the power to shape it! Whether you're fixing bugs, adding features, or customizing for your specific needs, QGC welcomes contributions from the community.
-
-🛠️ Start building today with our [Developer Guide](https://dev.qgroundcontrol.com/en/) and [build instructions](https://dev.qgroundcontrol.com/en/getting_started/).
+```bash
+sudo apt update
+sudo apt install -y openjdk-17-jdk-headless
+```
 
 ---
 
-### 🔗 *Useful Links*
+## Build do APK
 
-- 🌐 [Official Website](http://qgroundcontrol.com)
-- 📘 [User Manual](https://docs.qgroundcontrol.com/en/)
-- 🛠️ [Developer Guide](https://dev.qgroundcontrol.com/en/)
-- 💬 [Discussion & Support](https://docs.qgroundcontrol.com/en/Support/Support.html)
-- 🤝 [Contributing](https://dev.qgroundcontrol.com/en/contribute/)
-- 📜 [License Information](https://github.com/mavlink/qgroundcontrol/blob/master/.github/COPYING.md)
+### 1. Executar o script Docker
+
+```bash
+chmod +x deploy/docker/run-docker-ubuntu.sh
+./deploy/docker/run-docker-ubuntu.sh
+```
+
+Aguardar a conclusão do build.
 
 ---
+
+## Assinatura do APK
+
+### 1. Criar o keystore
+
+```bash
+keytool -genkeypair \
+  -alias qgc \
+  -keyalg RSA \
+  -keysize 2048 \
+  -validity 10000 \
+  -keystore my-qgc.keystore
+```
+
+### 2. Assinar o APK dentro do container Docker
+
+```bash
+docker run -it --rm \
+  -v "$(pwd):/project" \
+  qgc-android-docker \
+  bash -lc '
+    set -e
+
+    APK="/project/build/build/android-build/build/outputs/apk/release/android-build-release-unsigned.apk"
+    OUT="/project/build/QGC-signed.apk"
+    KEYSTORE="/project/my-qgc.keystore"
+
+    cp "$APK" "$OUT"
+
+    /opt/android-sdk/build-tools/*/apksigner sign \
+      --ks "$KEYSTORE" \
+      --ks-key-alias qgc \
+      "$OUT"
+
+    /opt/android-sdk/build-tools/*/apksigner verify --verbose "$OUT"
+
+    echo "SUCCESS -> $OUT"
+  '
+```
+
+O APK assinado estará disponível em `build/QGC-signed.apk`.
+
 
 With QGroundControl, you're in full command of your UAV, ready to take your missions to the next level.
