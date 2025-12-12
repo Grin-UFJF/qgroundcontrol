@@ -8,9 +8,6 @@
     <img src="https://img.shields.io/github/release/mavlink/QGroundControl.svg" alt="Latest Release">
   </a>
 </p>
-
-*QGroundControl* (QGC) is a highly intuitive and powerful Ground Control Station (GCS) designed for UAVs. Whether you're a first-time pilot or an experienced professional, QGC provides a seamless user experience for flight control and mission planning, making it the go-to solution for any *MAVLink-enabled drone*.
-
 ---
 
 # QGroundControl - Fork GRIn
@@ -82,5 +79,3 @@ docker run -it --rm \
 
 O APK assinado estará disponível em `build/QGC-signed.apk`.
 
-
-With QGroundControl, you're in full command of your UAV, ready to take your missions to the next level.
