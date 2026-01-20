@@ -220,7 +220,13 @@ GPSBaseStationSupport *GPSProvider::_connectGPS()
         baudrate = 0;
         break;
     case GPSType::u_blox:
-        gpsDriver = new GPSDriverUBX(GPSDriverUBX::Interface::UART, &_callbackEntry, this, &_sensorGps, &_satelliteInfo);
+        GPSDriverUBX::Settings settings;
+        settings.mode = GPSDriverUBX::UBXMode::Normal;
+        settings.dynamic_model = 6; // Airborne <1g
+        settings.heading_offset = 0;
+        settings.uart2_baudrate = 0;
+        settings.ppk_output = false;
+        gpsDriver = new GPSDriverUBX(GPSDriverUBX::Interface::UART, &_callbackEntry, this, &_sensorGps, &_satelliteInfo, settings);
         baudrate = 0;
         break;
     case GPSType::femto:
