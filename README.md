@@ -25,13 +25,26 @@ sudo apt install -y openjdk-17-jdk-headless
 
 ---
 
-## Build do APK
+## Build do Aplicativo do LINUX
 
 ### 1. Executar o script Docker
 
 ```bash
 chmod +x deploy/docker/run-docker-ubuntu.sh
 ./deploy/docker/run-docker-ubuntu.sh
+```
+
+Aguardar a conclusão do build.
+
+---
+
+## Build do ApK
+
+### 1. Executar o script Docker
+
+```bash
+chmod +x deploy/docker/run-docker-ubuntu.sh
+./deploy/docker/run-docker-android.sh
 ```
 
 Aguardar a conclusão do build.
