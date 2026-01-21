@@ -30,8 +30,8 @@ sudo apt install -y openjdk-17-jdk-headless
 ### 1. Executar o script Docker
 
 ```bash
-chmod +x deploy/docker/run-docker-ubuntu.sh
-./deploy/docker/run-docker-ubuntu.sh
+chmod +x deploy/docker/run-docker-android.sh
+./deploy/docker/run-docker-android.sh
 ```
 
 Aguardar a conclusão do build.
