@@ -62,6 +62,7 @@ Column {
                 text:               qsTr("Mode")
                 checked:            _camera.specifyCameraMode
                 onClicked:          _camera.specifyCameraMode = checked
+                visible:            false
             }
 
             FactComboBox {
@@ -77,20 +78,39 @@ Column {
             text:               qsTr("Gimbal")
             checked:            _camera.specifyGimbal
             onClicked:          _camera.specifyGimbal = checked
+            visible:            false
+        }
+
+        Component.onCompleted: {
+            _camera.specifyGimbal = true
+            _camera.specifyCameraMode = true
+        }
+
+        LabelledFactComboBox {
+            width:      parent.width
+            label:      qsTr("Objeto")
+            fact:       _camera.objectType
+            indexModel: false
+        }
+
+        FactTextFieldSlider {
+            width:          parent.width
+            label:          qsTr("Zoom")
+            fact:           _camera.zoom
         }
 
         FactTextFieldSlider {
             width:          parent.width
             label:          qsTr("Pitch")
             fact:           _camera.gimbalPitch
-            enabled:        gimbalCheckBox.checked
+            enabled:        true
         }
 
         FactTextFieldSlider {
             width:          parent.width
             label:          qsTr("Yaw")
             fact:           _camera.gimbalYaw
-            enabled:        gimbalCheckBox.checked
+            enabled:        true
         }
     }
 }

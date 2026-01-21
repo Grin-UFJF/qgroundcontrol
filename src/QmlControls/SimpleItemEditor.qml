@@ -108,7 +108,7 @@ Rectangle {
             ColumnLayout {
                 width:      parent.width
                 spacing:    0
-                visible:    _specifiesAltitude
+                visible:    false // _specifiesAltitude - Hidden by user request
 
                 QGCLabel {
                     Layout.fillWidth:   true
@@ -199,11 +199,48 @@ Rectangle {
             Repeater {
                 model: missionItem.textFieldFacts
 
-                FactTextFieldSlider {
-                    width:          parent.width
-                    label:              object.name
-                    fact:               object
-                    enabled:            !object.readOnly
+                Column {
+                    width: parent.width
+                    visible: object.name !== "Hold"
+
+                    FactTextFieldSlider {
+                        width:          parent.width
+                        label:              object.name
+                        fact:               object
+                        enabled:            !object.readOnly
+                        visible:            object.name !== "Yaw"
+                    }
+
+                    FactTextFieldSlider {
+                        width:                  parent.width
+                        label:                  object.name
+                        fact:                   object
+                        showEnableCheckbox:     true
+                        enableCheckBoxChecked:  object.value != -1
+                        visible:                object.name === "Yaw"
+
+                        onEnableCheckboxClicked: {
+                            if (enableCheckBoxChecked) {
+                                if (object.value == -1) object.value = 0
+                            } else {
+                                object.value = -1
+                            }
+                        }
+
+                        Component.onCompleted: {
+                           // Sync initial value if needed, or if Yaw is set and Altitude is not
+                           if (object.value != -1) {
+                               missionItem.altitude.value = object.value
+                           }
+                        }
+
+                        Connections {
+                            target: object
+                            function onValueChanged() {
+                                missionItem.altitude.value = object.value
+                            }
+                        }
+                    }
                 }
             }
 

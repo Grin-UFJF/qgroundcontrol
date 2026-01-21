@@ -49,6 +49,8 @@ public:
     Q_PROPERTY(bool     cameraModeSupported             READ cameraModeSupported                                                CONSTANT)   ///< true: cameraMode is supported by this vehicle
     Q_PROPERTY(bool     specifyCameraMode               READ specifyCameraMode              WRITE setSpecifyCameraMode          NOTIFY specifyCameraModeChanged)
     Q_PROPERTY(Fact*    cameraMode                      READ cameraMode                                                         CONSTANT)   ///< MAV_CMD_SET_CAMERA_MODE.param2
+    Q_PROPERTY(Fact*    objectType                      READ objectType                                                         CONSTANT)
+    Q_PROPERTY(Fact*    zoom                            READ zoom                                                               CONSTANT)
 
     bool    specifyGimbal               (void) const { return _specifyGimbal; }
     Fact*   gimbalYaw                   (void) { return &_gimbalYawFact; }
@@ -59,6 +61,8 @@ public:
     bool    cameraModeSupported         (void) const;
     bool    specifyCameraMode           (void) const { return _specifyCameraMode; }
     Fact*   cameraMode                  (void) { return &_cameraModeFact; }
+    Fact*   objectType                  (void) { return &_objectTypeFact; }
+    Fact*   zoom                        (void) { return &_zoomFact; }
 
     void setSpecifyGimbal       (bool specifyGimbal);
     void setSpecifyCameraMode   (bool specifyCameraMode);
@@ -121,6 +125,8 @@ private:
     Fact    _cameraPhotoIntervalDistanceFact;
     Fact    _cameraPhotoIntervalTimeFact;
     Fact    _cameraModeFact;
+    Fact    _objectTypeFact;
+    Fact    _zoomFact;
     int     _takePhotoSequence;
     bool    _dirty;
 
@@ -132,6 +138,8 @@ private:
     static constexpr const char* _cameraPhotoIntervalDistanceName =   "CameraPhotoIntervalDistance";
     static constexpr const char* _cameraPhotoIntervalTimeName =       "CameraPhotoIntervalTime";
     static constexpr const char* _cameraModeName =                    "CameraMode";
+    static constexpr const char* _objectTypeName =                    "ObjectType";
+    static constexpr const char* _zoomName =                          "Zoom";
 
     friend CameraSectionTest;
 };

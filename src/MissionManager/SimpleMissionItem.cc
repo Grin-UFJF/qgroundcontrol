@@ -54,6 +54,11 @@ SimpleMissionItem::SimpleMissionItem(PlanMasterController* masterController, boo
         _updateOptionalSections();
         _setDefaultsForCommand();
         _rebuildFacts();
+
+        if (command() == MAV_CMD_NAV_WAYPOINT) {
+             _altitudeFact.setRawValue(_missionItem._param4Fact.rawValue());
+        }
+
         setDirty(false);
     }
 }
@@ -109,6 +114,10 @@ SimpleMissionItem::SimpleMissionItem(PlanMasterController* masterController, boo
 
     // Signal coordinate changed to kick off terrain query
     emit coordinateChanged(coordinate());
+
+    if (command() == MAV_CMD_NAV_WAYPOINT) {
+         _altitudeFact.setRawValue(_missionItem._param4Fact.rawValue());
+    }
 
     setDirty(false);
 }
@@ -192,6 +201,12 @@ void SimpleMissionItem::_connectSignals(void)
 
     connect(_missionController,                 &MissionController::plannedHomePositionChanged, this, &SimpleMissionItem::_amslEntryAltChanged);
     connect(_missionController,                 &MissionController::plannedHomePositionChanged, this, &SimpleMissionItem::_amslExitAltChanged);
+
+    connect(&_missionItem._param4Fact, &Fact::valueChanged, this, [this](QVariant value){
+        if (command() == MAV_CMD_NAV_WAYPOINT) {
+             _altitudeFact.setRawValue(value);
+        }
+    });
 }
 
 void SimpleMissionItem::_setupMetaData(void)
@@ -321,6 +336,11 @@ bool SimpleMissionItem::load(const QJsonObject& json, int sequenceNumber, QStrin
     _connectSignals();
     _updateOptionalSections();
     _rebuildFacts();
+
+    if (command() == MAV_CMD_NAV_WAYPOINT) {
+         _altitudeFact.setRawValue(_missionItem._param4Fact.rawValue());
+    }
+
     setDirty(false);
 
     return true;

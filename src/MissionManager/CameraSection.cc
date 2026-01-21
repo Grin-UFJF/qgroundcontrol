@@ -31,6 +31,8 @@ CameraSection::CameraSection(PlanMasterController* masterController, QObject* pa
     , _cameraPhotoIntervalDistanceFact  (0, _cameraPhotoIntervalDistanceName,   FactMetaData::valueTypeDouble)
     , _cameraPhotoIntervalTimeFact      (0, _cameraPhotoIntervalTimeName,       FactMetaData::valueTypeUint32)
     , _cameraModeFact                   (0, _cameraModeName,                    FactMetaData::valueTypeUint32)
+    , _objectTypeFact                   (0, _objectTypeName,                    FactMetaData::valueTypeUint32)
+    , _zoomFact                         (0, _zoomName,                          FactMetaData::valueTypeDouble)
     , _takePhotoSequence                (0)
     , _dirty                            (false)
 {
@@ -44,6 +46,8 @@ CameraSection::CameraSection(PlanMasterController* masterController, QObject* pa
     _cameraPhotoIntervalDistanceFact.setMetaData    (_metaDataMap[_cameraPhotoIntervalDistanceName]);
     _cameraPhotoIntervalTimeFact.setMetaData        (_metaDataMap[_cameraPhotoIntervalTimeName]);
     _cameraModeFact.setMetaData                     (_metaDataMap[_cameraModeName]);
+    _objectTypeFact.setMetaData                     (_metaDataMap[_objectTypeName]);
+    _zoomFact.setMetaData                           (_metaDataMap[_zoomName]);
 
     _gimbalPitchFact.setRawValue                    (_gimbalPitchFact.rawDefaultValue());
     _gimbalYawFact.setRawValue                      (_gimbalYawFact.rawDefaultValue());
@@ -51,6 +55,8 @@ CameraSection::CameraSection(PlanMasterController* masterController, QObject* pa
     _cameraPhotoIntervalDistanceFact.setRawValue    (_cameraPhotoIntervalDistanceFact.rawDefaultValue());
     _cameraPhotoIntervalTimeFact.setRawValue        (_cameraPhotoIntervalTimeFact.rawDefaultValue());
     _cameraModeFact.setRawValue                     (_cameraModeFact.rawDefaultValue());
+    _objectTypeFact.setRawValue                     (_objectTypeFact.rawDefaultValue());
+    _zoomFact.setRawValue                           (_zoomFact.rawDefaultValue());
 
     connect(this,                               &CameraSection::specifyGimbalChanged,       this, &CameraSection::_specifyChanged);
     connect(this,                               &CameraSection::specifyCameraModeChanged,   this, &CameraSection::_specifyChanged);
@@ -62,6 +68,8 @@ CameraSection::CameraSection(PlanMasterController* masterController, QObject* pa
     connect(&_cameraPhotoIntervalDistanceFact,  &Fact::valueChanged,                        this, &CameraSection::_setDirty);
     connect(&_cameraPhotoIntervalTimeFact,      &Fact::valueChanged,                        this, &CameraSection::_setDirty);
     connect(&_cameraModeFact,                   &Fact::valueChanged,                        this, &CameraSection::_setDirty);
+    connect(&_objectTypeFact,                   &Fact::valueChanged,                        this, &CameraSection::_setDirty);
+    connect(&_zoomFact,                         &Fact::valueChanged,                        this, &CameraSection::_setDirty);
     connect(this,                               &CameraSection::specifyGimbalChanged,       this, &CameraSection::_setDirty);
     connect(this,                               &CameraSection::specifyCameraModeChanged,   this, &CameraSection::_setDirty);
 
@@ -195,17 +203,44 @@ void CameraSection::appendSectionItems(QList<MissionItem*>& items, QObject* miss
             break;
 
         case TakePhoto:
-            item = new MissionItem(nextSequenceNumber++,
-                                   MAV_CMD_IMAGE_START_CAPTURE,
-                                   MAV_FRAME_MISSION,
-                                   0,                           // Reserved (Set to 0)
-                                   0,                           // Interval (none)
-                                   1,                           // Take 1 photo
-                                   _takePhotoSequence++,        // Increasing sequence number
-                                   qQNaN(), qQNaN(), qQNaN(),   // reserved
-                                   true,                        // autoContinue
-                                   false,                       // isCurrentItem
-                                   missionItemParent);
+             // If ObjectType or Zoom are specified (non-zero), use the custom command sequence
+            if (_objectTypeFact.rawValue().toInt() != 0 || _zoomFact.rawValue().toDouble() != 0) {
+                item = new MissionItem(nextSequenceNumber++,
+                                       MAV_CMD_DO_MOUNT_CONTROL,    // 205
+                                       MAV_FRAME_MISSION,
+                                       _gimbalPitchFact.rawValue().toDouble(),  // Param 1: Pitch
+                                       0,                                       // Param 2: Roll
+                                       _gimbalYawFact.rawValue().toDouble(),    // Param 3: Yaw
+                                       0, 0, 0,                                 // Param 4-6
+                                       MAV_MOUNT_MODE_MAVLINK_TARGETING,        // Param 7: Mode (2)
+                                       true,                        // autoContinue
+                                       false,                       // isCurrentItem
+                                       missionItemParent);
+                items.append(item);
+
+                item = new MissionItem(nextSequenceNumber++,
+                                       (MAV_CMD)2000,               // Custom command ID requested
+                                       MAV_FRAME_MISSION,
+                                       _objectTypeFact.rawValue().toDouble(), // Param 1: Object Type
+                                       _zoomFact.rawValue().toDouble(),       // Param 2: Zoom
+                                       1, 0, qQNaN(), qQNaN(), qQNaN(),       // Other params
+                                       true,                                  // autoContinue
+                                       false,                                 // isCurrentItem
+                                       missionItemParent);
+            } else {
+                // Default Take Photo behavior
+                item = new MissionItem(nextSequenceNumber++,
+                                       MAV_CMD_IMAGE_START_CAPTURE,
+                                       MAV_FRAME_MISSION,
+                                       0,                           // Reserved (Set to 0)
+                                       0,                           // Interval (none)
+                                       1,                           // Take 1 photo
+                                       _takePhotoSequence++,        // Increasing sequence number
+                                       qQNaN(), qQNaN(), qQNaN(),   // reserved
+                                       true,                        // autoContinue
+                                       false,                       // isCurrentItem
+                                       missionItemParent);
+            }
             break;
         }
         if (item) {

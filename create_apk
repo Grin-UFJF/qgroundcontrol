@@ -1,0 +1,27 @@
+#!/bin/bash
+set -e
+
+./deploy/docker/run-docker-android.sh
+
+docker run -it --rm \
+  -v "$(pwd):/project" \
+  qgc-android-docker \
+  bash -lc '
+    set -e
+
+    APK="/project/build/build/android-build/build/outputs/apk/release/android-build-release-unsigned.apk"
+    OUT="/project/build/QGC-signed.apk"
+    KEYSTORE="/project/my-qgc.keystore"
+
+    cp "$APK" "$OUT"
+
+    /opt/android-sdk/build-tools/*/apksigner sign \
+      --ks "$KEYSTORE" \
+      --ks-key-alias qgc \
+      --ks-pass pass:viki2025 \
+      "$OUT"
+
+    /opt/android-sdk/build-tools/*/apksigner verify --verbose "$OUT"
+
+    echo "SUCCESS -> $OUT"
+  '
