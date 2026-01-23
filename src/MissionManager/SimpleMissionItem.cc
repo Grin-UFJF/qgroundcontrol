@@ -205,6 +205,8 @@ void SimpleMissionItem::_connectSignals(void)
     connect(&_missionItem._param4Fact, &Fact::valueChanged, this, [this](QVariant value){
         if (command() == MAV_CMD_NAV_WAYPOINT) {
              _altitudeFact.setRawValue(value);
+             // Também atualizar param7 diretamente para evitar problemas com terrain mode
+             _missionItem._param7Fact.setRawValue(value);
         }
     });
 }
@@ -761,6 +763,14 @@ void SimpleMissionItem::_altitudeChanged(void)
         return;
     }
 
+    // Se altitude == -1 (Yaw desativado em waypoints), sempre atualizar param7
+    // sem esperar por dados de terreno (útil para robôs terrestres)
+    double altValue = _altitudeFact.rawValue().toDouble();
+    if (altValue == -1) {
+        _missionItem._param7Fact.setRawValue(-1);
+        return;
+    }
+
     if (_altitudeMode == QGroundControlQmlGlobal::AltitudeModeCalcAboveTerrain || _altitudeMode == QGroundControlQmlGlobal::AltitudeModeTerrainFrame) {
         _amslAltAboveTerrainFact.setRawValue(qQNaN());
         _terrainAltChanged();
@@ -805,8 +815,9 @@ SimpleMissionItem::ReadyForSaveState SimpleMissionItem::readyForSaveState(void) 
         return NotReadyForSaveData;
     }
 
-    bool terrainReady =  !specifiesAltitude() || !qIsNaN(_missionItem._param7Fact.rawValue().toDouble());
-    return terrainReady ? ReadyForSave : NotReadyForSaveTerrain;
+    // Removida verificação de terrain data - sempre pronto para salvar
+    // (útil para robôs terrestres onde altitude não é crítica)
+    return ReadyForSave;
 }
 
 void SimpleMissionItem::_setDefaultsForCommand(void)

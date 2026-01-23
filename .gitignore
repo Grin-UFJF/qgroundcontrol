@@ -110,6 +110,8 @@ build.ninja
 ios/iOSForAppStore-Info.plist
 
 # Android
+0.gradle/
+.gradle/
 android/local.properties
 *.class
 

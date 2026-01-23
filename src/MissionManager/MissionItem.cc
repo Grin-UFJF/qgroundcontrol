@@ -148,7 +148,33 @@ void MissionItem::save(QJsonObject& json) const
     json[_jsonAutoContinueKey] = autoContinue();
     json[_jsonDoJumpIdKey] = _sequenceNumber;
 
-    QJsonArray rgParams =  { param1(), param2(), param3(), param4(), param5(), param6(), param7() };
+    QJsonArray rgParams;
+
+    // Helper para adicionar parâmetros
+    // forceMinusOneOnNaN: Se true, converte NaN para -1.0 (usado para Yaw/Alt em Waypoints)
+    auto addParam = [&](double val, bool forceMinusOneOnNaN = false) {
+        if (std::isnan(val)) {
+            if (forceMinusOneOnNaN) {
+                rgParams.append(-1.0);
+            } else {
+                rgParams.append(QJsonValue()); // null
+            }
+        } else {
+            rgParams.append(val);
+        }
+    };
+
+    // Para Waypoints, queremos que Yaw (param4) e Alt (param7) sejam -1 se não estiverem definidos (ou se forem NaN)
+    bool isWaypoint = (command() == MAV_CMD_NAV_WAYPOINT);
+
+    addParam(param1());
+    addParam(param2());
+    addParam(param3());
+    addParam(param4(), isWaypoint); // Param4: Yaw
+    addParam(param5());             // Param5: Lat
+    addParam(param6());             // Param6: Lon
+    addParam(param7(), isWaypoint); // Param7: Alt
+
     json[_jsonParamsKey] = rgParams;
 }
 

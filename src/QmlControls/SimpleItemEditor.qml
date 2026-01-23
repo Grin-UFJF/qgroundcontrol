@@ -221,23 +221,13 @@ Rectangle {
 
                         onEnableCheckboxClicked: {
                             if (enableCheckBoxChecked) {
-                                if (object.value == -1) object.value = 0
+                                // Ativar: definir valor do yaw (C++ sincroniza com param7 automaticamente)
+                                if (object.value == -1) {
+                                    object.value = 0
+                                }
                             } else {
+                                // Desativar: definir -1 (C++ sincroniza com param7 automaticamente)
                                 object.value = -1
-                            }
-                        }
-
-                        Component.onCompleted: {
-                           // Sync initial value if needed, or if Yaw is set and Altitude is not
-                           if (object.value != -1) {
-                               missionItem.altitude.value = object.value
-                           }
-                        }
-
-                        Connections {
-                            target: object
-                            function onValueChanged() {
-                                missionItem.altitude.value = object.value
                             }
                         }
                     }
