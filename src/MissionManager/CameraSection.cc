@@ -124,6 +124,7 @@ void CameraSection::appendSectionItems(QList<MissionItem*>& items, QObject* miss
 {
     // IMPORTANT NOTE: If anything changes here you must also change CameraSection::scanForSection
 
+    // Camera Mode (Set Camera Mode)
     if (_specifyCameraMode) {
         MissionItem* item = new MissionItem(nextSequenceNumber++,
                                             MAV_CMD_SET_CAMERA_MODE,
@@ -137,7 +138,12 @@ void CameraSection::appendSectionItems(QList<MissionItem*>& items, QObject* miss
         items.append(item);
     }
 
-    if (_specifyGimbal) {
+    // Identificar ação selecionada
+    int action = _cameraActionFact.rawValue().toInt();
+
+    // Se a ação for TakePhoto, nós cuidaremos do Gimbal (205) dentro do bloco TakePhoto
+    // Se a ação NÃO for TakePhoto, e specifyGimbal for true, criamos o 205 aqui
+    if (_specifyGimbal && action != TakePhoto) {
         MissionItem* item = new MissionItem(nextSequenceNumber++,
                                             MAV_CMD_DO_MOUNT_CONTROL,
                                             MAV_FRAME_MISSION,
@@ -152,59 +158,15 @@ void CameraSection::appendSectionItems(QList<MissionItem*>& items, QObject* miss
         items.append(item);
     }
 
-    if (_cameraActionFact.rawValue().toInt() != CameraActionNone) {
+    if (action != CameraActionNone) {
         MissionItem* item = nullptr;
 
-        switch (_cameraActionFact.rawValue().toInt()) {
-        case TakePhotosIntervalTime:
-            item = new MissionItem(nextSequenceNumber++,
-                                   MAV_CMD_IMAGE_START_CAPTURE,
-                                   MAV_FRAME_MISSION,
-                                   0,                                               // Reserved (Set to 0)
-                                   _cameraPhotoIntervalTimeFact.rawValue().toInt(), // Interval
-                                   0,                                               // Unlimited photo count
-                                   qQNaN(), qQNaN(), qQNaN(), qQNaN(),              // reserved
-                                   true,                                            // autoContinue
-                                   false,                                           // isCurrentItem
-                                   missionItemParent);
-            break;
-
-        case TakePhotoIntervalDistance:
-            item = new MissionItem(nextSequenceNumber++,
-                                   MAV_CMD_DO_SET_CAM_TRIGG_DIST,
-                                   MAV_FRAME_MISSION,
-                                   _cameraPhotoIntervalDistanceFact.rawValue().toDouble(),  // Trigger distance
-                                   0,                                                       // No shutter integartion
-                                   1,                                                       // Trigger immediately
-                                   0, 0, 0, 0,                                              // param 4-7 not used
-                                   true,                                                    // autoContinue
-                                   false,                                                   // isCurrentItem
-                                   missionItemParent);
-            break;
-
-        case TakeVideo:
-            item = new MissionItem(nextSequenceNumber++,
-                                   MAV_CMD_VIDEO_START_CAPTURE,
-                                   MAV_FRAME_MISSION,
-                                   0,                                               // Reserved (Set to 0)
-                                   VIDEO_CAPTURE_STATUS_INTERVAL,                   // CAMERA_CAPTURE_STATUS (default to every 5 seconds)
-                                   qQNaN(), qQNaN(), qQNaN(), qQNaN(),  qQNaN(),    // reserved
-                                   true,                                            // autoContinue
-                                   false,                                           // isCurrentItem
-                                   missionItemParent);
-            break;
-
-        case StopTakingVideo:
-            appendStopTakingVideo(items, nextSequenceNumber, missionItemParent);
-            break;
-
-        case StopTakingPhotos:
-            appendStopTakingPhotos(items, nextSequenceNumber, missionItemParent);
-            break;
-
+        switch (action) {
         case TakePhoto:
-             // If ObjectType or Zoom are specified (non-zero), use the custom command sequence
-            if (_objectTypeFact.rawValue().toInt() != 0 || _zoomFact.rawValue().toDouble() != 0) {
+             {
+                // SEMPRE criar o combo 205 (Gimbal) + 2000 (Custom Photo)
+                
+                // 1. Criar comando 205 (Mount Control)
                 item = new MissionItem(nextSequenceNumber++,
                                        MAV_CMD_DO_MOUNT_CONTROL,    // 205
                                        MAV_FRAME_MISSION,
@@ -218,6 +180,8 @@ void CameraSection::appendSectionItems(QList<MissionItem*>& items, QObject* miss
                                        missionItemParent);
                 items.append(item);
 
+                // 2. Criar comando 2000 (Custom Take Photo)
+                // Se ObjectType/Zoom não form definidos, envia 0
                 item = new MissionItem(nextSequenceNumber++,
                                        (MAV_CMD)2000,               // Custom command ID requested
                                        MAV_FRAME_MISSION,
@@ -227,22 +191,20 @@ void CameraSection::appendSectionItems(QList<MissionItem*>& items, QObject* miss
                                        true,                                  // autoContinue
                                        false,                                 // isCurrentItem
                                        missionItemParent);
-            } else {
-                // Default Take Photo behavior
-                item = new MissionItem(nextSequenceNumber++,
-                                       MAV_CMD_IMAGE_START_CAPTURE,
-                                       MAV_FRAME_MISSION,
-                                       0,                           // Reserved (Set to 0)
-                                       0,                           // Interval (none)
-                                       1,                           // Take 1 photo
-                                       _takePhotoSequence++,        // Increasing sequence number
-                                       qQNaN(), qQNaN(), qQNaN(),   // reserved
-                                       true,                        // autoContinue
-                                       false,                       // isCurrentItem
-                                       missionItemParent);
+                items.append(item); // Adiciona o 2000
+                item = nullptr;     // Item já adicionado, seta null para não adicionar novamente no final
             }
             break;
+            
+        case TakePhotosIntervalTime:
+        case TakePhotoIntervalDistance:
+        case TakeVideo:
+        case StopTakingVideo:
+        case StopTakingPhotos:
+            // Opções removidas do menu, mas mantendo cases vazios ou default se necessário
+            break;
         }
+        
         if (item) {
             items.append(item);
         }
