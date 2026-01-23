@@ -52,38 +52,10 @@ Column {
             visible:    _camera.cameraAction.rawValue === 2
         }
 
-        RowLayout {
-            width:      parent.width
-            spacing:    ScreenTools.defaultFontPixelWidth
-            visible:    _camera.cameraModeSupported
-
-            QGCCheckBox {
-                id:                 modeCheckBox
-                text:               qsTr("Mode")
-                checked:            _camera.specifyCameraMode
-                onClicked:          _camera.specifyCameraMode = checked
-                visible:            false
-            }
-
-            FactComboBox {
-                fact:               _camera.cameraMode
-                indexModel:         false
-                enabled:            modeCheckBox.checked
-                Layout.fillWidth:   true
-            }
-        }
-
-        QGCCheckBox {
-            id:                 gimbalCheckBox
-            text:               qsTr("Gimbal")
-            checked:            _camera.specifyGimbal
-            onClicked:          _camera.specifyGimbal = checked
-            visible:            false
-        }
-
         Component.onCompleted: {
             _camera.specifyGimbal = true
             _camera.specifyCameraMode = true
+            _camera.cameraMode.rawValue = 0 // Force Photo mode
         }
 
         LabelledFactComboBox {

@@ -91,6 +91,7 @@ project(${QGC_APP_NAME}
     HOMEPAGE_URL "https://${QGC_ORG_DOMAIN}"
     LANGUAGES C CXX
 )
+message(STATUS "QGC: Application Name is ${QGC_APP_NAME}")
 
 # ============================================================================
 # CMake & Build System Configuration
