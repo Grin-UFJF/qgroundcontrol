@@ -280,9 +280,23 @@ void SimpleMissionItem::save(QJsonArray&  missionItems)
         if (i == 0) {
             // This is the main simple item, save the alt/terrain data
             if (specifiesAltitude()) {
-                saveObject[_jsonAltitudeModeKey] =          _altitudeMode;
-                saveObject[_jsonAltitudeKey] =              _altitudeFact.rawValue().toDouble();
-                saveObject[_jsonAMSLAltAboveTerrainKey] =   _amslAltAboveTerrainFact.rawValue().toDouble();
+                saveObject[_jsonAltitudeModeKey] = _altitudeMode;
+                // Garantir que Altitude seja igual ao param7 (params[6])
+                // Pegar o valor de param7 do array params que já foi salvo
+                if (saveObject.contains("params") && saveObject["params"].isArray()) {
+                    QJsonArray params = saveObject["params"].toArray();
+                    if (params.size() >= 7) {
+                        // Usar o mesmo valor de param7 (index 6) para Altitude
+                        saveObject[_jsonAltitudeKey] = params[6].toDouble();
+                    } else {
+                        saveObject[_jsonAltitudeKey] = 0.0;
+                    }
+                } else {
+                    saveObject[_jsonAltitudeKey] = 0.0;
+                }
+                // Se AMSLAltAboveTerrain for NaN, salvar 0 ao invés de NaN
+                double amslAlt = _amslAltAboveTerrainFact.rawValue().toDouble();
+                saveObject[_jsonAMSLAltAboveTerrainKey] = qIsNaN(amslAlt) ? 0.0 : amslAlt;
             }
         }
         missionItems.append(saveObject);
@@ -339,8 +353,11 @@ bool SimpleMissionItem::load(const QJsonObject& json, int sequenceNumber, QStrin
     _updateOptionalSections();
     _rebuildFacts();
 
+    // Para waypoints, garantir que param4 e param7 estejam sincronizados
     if (command() == MAV_CMD_NAV_WAYPOINT) {
          _altitudeFact.setRawValue(_missionItem._param4Fact.rawValue());
+         // Garantir que param7 também está sincronizado
+         _missionItem._param7Fact.setRawValue(_missionItem._param4Fact.rawValue());
     }
 
     setDirty(false);
@@ -1037,6 +1054,14 @@ void SimpleMissionItem::_sectionDirtyChanged(bool dirty)
 void SimpleMissionItem::appendMissionItems(QList<MissionItem*>& items, QObject* missionItemParent)
 {
     int seqNum = sequenceNumber();
+
+    // Para WAYPOINTs, garantir que param7 seja igual a param4 antes do upload
+    // Se param4 for NaN, usar -1 (valor padrão para Yaw/Altitude não definido)
+    if (command() == MAV_CMD_NAV_WAYPOINT) {
+        double param4Value = _missionItem._param4Fact.rawValue().toDouble();
+        double param7Value = qIsNaN(param4Value) ? -1.0 : param4Value;
+        _missionItem._param7Fact.setRawValue(param7Value);
+    }
 
     items.append(new MissionItem(missionItem(), missionItemParent));
     seqNum++;
