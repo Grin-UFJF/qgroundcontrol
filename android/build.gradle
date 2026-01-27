@@ -100,6 +100,7 @@ android {
         println "ndk.abiFilters: ${ndk.abiFilters}"
         println "versionCode: ${versionCode}"
         println "versionName: ${versionName}"
+        applicationId "org.olhe5g.qgroundcontrol"
     }
 
     println "androidPackageName: ${namespace}"
