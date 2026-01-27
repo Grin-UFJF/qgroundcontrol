@@ -99,7 +99,7 @@ int CameraSection::itemCount(void) const
 {
     int itemCount = 0;
 
-    if (_specifyGimbal) {
+    if (_specifyGimbal && _cameraActionFact.rawValue().toInt() != CameraActionNone) {
         itemCount++;
     }
     if (_specifyCameraMode) {
@@ -147,7 +147,7 @@ void CameraSection::appendSectionItems(QList<MissionItem*>& items, QObject* miss
 
     // Se a ação for TakePhoto, nós cuidaremos do Gimbal (205) dentro do bloco TakePhoto
     // Se a ação NÃO for TakePhoto, e specifyGimbal for true, criamos o 205 aqui
-    if (_specifyGimbal && action != TakePhoto) {
+    if (_specifyGimbal && action != TakePhoto && action != CameraActionNone) {
         MissionItem* item = new MissionItem(nextSequenceNumber++,
                                             MAV_CMD_DO_MOUNT_CONTROL,
                                             MAV_FRAME_MISSION,
